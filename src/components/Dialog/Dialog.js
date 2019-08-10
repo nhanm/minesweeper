@@ -4,11 +4,11 @@ import ReactDOM from 'react-dom';
 class Dialog extends Component {
 	constructor(props) {
 		super(props);
-        this.el = document.createElement('div');
+		this.el = document.createElement('div');
 	}
-    
+	
 	componentDidMount() {
-        document.getElementById('root').appendChild(this.el);
+		document.getElementById('root').appendChild(this.el);
 	}
 
 	componentWillUnmount() {

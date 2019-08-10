@@ -19,7 +19,7 @@ class Timer extends Component {
 	getTime = () => this.state.count;
 
 	render() {
-        const count = this.props.defaultCount || this.state.count;
+		const count = this.props.defaultCount || this.state.count;
 		const hundreds = parseInt(count / 100, 10);
 		const tens = parseInt((count - hundreds * 100) / 10, 10);
 		const seconds = parseInt(count - hundreds * 100 - tens * 10);
