@@ -211,7 +211,7 @@ class Board extends PureComponent {
 		const { size, status, onChangeStatus, mines } = this.props;
 		const { isFetching } = this.state;
 		const isEndGame = status === EnumBoardStatus.WIN || status === EnumBoardStatus.LOSE;
-		console.log('mins', mines);
+
 		return (
 			<div
 				className="board"
