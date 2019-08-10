@@ -215,6 +215,8 @@ class Board extends PureComponent {
 		return (
 			<div
 				className="board"
+				onTouchStart={this.handleMouseDown}
+				onTouchEnd={this.handleMouseUp}
 				onMouseDown={this.handleMouseDown}
 				onMouseUp={this.handleMouseUp}
 				onMouseLeave={this.handleMouseLeave}

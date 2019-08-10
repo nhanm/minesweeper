@@ -50,6 +50,8 @@ class Cell extends Component {
 						(status === EnumBoardStatus.WIN || status === EnumBoardStatus.LOSE) && cell.weight === 9,
 					'cell--bomb-death': status === EnumBoardStatus.LOSE && visitedCell.x === cell.x && visitedCell.y === cell.y,
 				})}
+				onTouchStart={this.handleMouseEnter}
+				onTouchEnd={this.handleMouseLeave}
 				onMouseOver={this.handleMouseEnter}
 				onMouseOut={this.handleMouseLeave}
 				onContextMenu={this.handleFlagCell}
