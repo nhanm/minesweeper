@@ -1,0 +1,109 @@
+.cell {
+    background-image: url('../../assets/images/sprite100.gif');
+    width: 16px;
+    height: 16px;
+    background-position: 0 -39px;
+    
+    &--blank {
+        background-position: 0 -39px;
+    }
+    &--bomb-flagged {
+        background-position: -16px -39px;
+    }
+    &--bomb-revealed {
+        background-position: -64px -39px;
+    }
+    &--bomb-death {
+        background-position: -32px -39px;
+    }
+    &--visited {
+        background-position: 0 -23px;
+    }
+    &--open0 {
+        background-position: 0 -23px;
+    }
+    &--open1 {
+        background-position: -16px -23px;
+    }
+    &--open2 {
+        background-position: -32px -23px;
+    }
+    &--open3 {
+        background-position: -48px -23px;
+    }
+    &--open4 {
+        background-position: -64px -23px;
+    }
+    &--open5 {
+        background-position: -80px -23px;
+    }
+    &--open6 {
+        background-position: -96px -23px;
+    }
+    &--open7 {
+        background-position: -112px -23px;
+    }
+    &--open8 {
+        background-position: -128px -23px;
+    }
+}
+
+.timer {
+    display: flex;
+
+    &__time {
+        width: 13px;
+        height: 23px;
+        background-image: url('../../assets/images/sprite100.gif');
+    
+        &--time0 {
+            background-position: 0 0;
+        }
+        &--time1 {
+            background-position: -13px 0;
+        }
+        &--time2 {
+            background-position: -26px 0;
+        }
+        &--time3 {
+            background-position: -39px 0;
+        }
+        &--time4 {
+            background-position: -52px 0;
+        }
+        &--time5 {
+            background-position: -65px 0;
+        }
+        &--time6 {
+            background-position: -78px 0;
+        }
+        &--time7 {
+            background-position: -91px 0;
+        }
+        &--time8 {
+            background-position: -104px 0;
+        }
+        &--time9 {
+            background-position: -117px 0;
+        }
+    }
+}
+
+.board {
+    display: inline-block;
+    border: 5px solid #a9a4a4;
+    background: silver;
+    margin-top: 170px;
+
+    &__header {
+        border-bottom: 5px solid #a9a4a4;
+        display: flex;
+        justify-content: space-between;
+    }
+    &__body {
+        display: flex;
+        flex-wrap: wrap;
+        width: 144px;
+        height: 144px;
+    }
+}
