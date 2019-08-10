@@ -6,6 +6,7 @@ class Timer extends Component {
 	};
 
 	startCounting = () => {
+		this.setState({ count: this.state.count + 1 });
 		this.countingInterval = setInterval(() => {
 			const { count } = this.state;
 			this.setState({ count: count + 1 });
