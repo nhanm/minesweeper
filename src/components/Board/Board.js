@@ -220,7 +220,7 @@ class Board extends PureComponent {
 				onMouseLeave={this.handleMouseLeave}
 				style={{ pointerEvents: isEndGame || isFetching ? 'none' : 'unset' }}
 			>
-				{<div className="board__extra-info">Getting data...! Please wait</div>}
+				{isFetching && <div className="board__extra-info">Getting data...! Please wait</div>}
 				<div className="board__header">
 					<Timer defaultCount={mines} />
 					<Timer ref={this.timerRef} />
