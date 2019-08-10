@@ -89,7 +89,7 @@ class Board extends PureComponent {
 	handleMouseUp = e => {
 		if (e.button === 0) {
 			//left-click only
-			this.setState({ isClicking: false }, this.handleSelectCell);
+			this.setState({ isClicking: false }, () => this.handleSelectCell(this.visitedCell));
 		}
 	};
 
@@ -134,13 +134,13 @@ class Board extends PureComponent {
 		return boardMap;
 	};
 
-	handleSelectCell = () => {
-		if (!this.visitedCell) {
+	handleSelectCell = (cell) => {
+		if (!cell) {
 			return;
 		}
 
 		const { onChangeStatus, status, size } = this.props;
-		const { weight, x, y } = this.visitedCell;
+		const { weight, x, y } = cell;
 
 		// enable time counter when click on the first button
 		if (status === EnumBoardStatus.PENDING) {
@@ -199,6 +199,7 @@ class Board extends PureComponent {
 						onFlagCell={this.handleFlagCell}
 						status={status}
 						visitedCell={this.visitedCell}
+						onSelectCell={this.handleSelectCell}
 					/>
 				);
 			}
@@ -215,8 +216,6 @@ class Board extends PureComponent {
 		return (
 			<div
 				className="board"
-				onTouchStart={this.handleMouseDown}
-				onTouchEnd={this.handleMouseUp}
 				onMouseDown={this.handleMouseDown}
 				onMouseUp={this.handleMouseUp}
 				onMouseLeave={this.handleMouseLeave}
