@@ -16,6 +16,10 @@ class Timer extends Component {
 		clearInterval(this.countingInterval);
 	};
 
+	resetCounting = () => {
+		this.setState({ count: 0 });
+	}
+
 	getTime = () => this.state.count;
 
 	render() {

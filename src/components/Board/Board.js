@@ -22,6 +22,7 @@ class Board extends PureComponent {
 	handleRestartGame = () => {
 		const { onChangeStatus } = this.props;
 		onChangeStatus(EnumBoardStatus.PENDING);
+		this.timerRef.current.resetCounting();
 		this.generateBoardMap();
 	};
 
