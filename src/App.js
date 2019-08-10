@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.scss';
 import Board from './components/Board/Board';
-import ConfirmDialog from './components/Dialog/ConfirmDialog';
 import { EnumBoardStatus } from './constant/Constant';
+
+import './App.scss';
 
 class App extends Component {
 	state = {

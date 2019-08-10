@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, Fragment } from 'react';
 import Cell from './Cell';
 import Timer from './Timer';
 import ConfirmDialog from '../Dialog/ConfirmDialog';
@@ -220,6 +220,7 @@ class Board extends PureComponent {
 				onMouseLeave={this.handleMouseLeave}
 				style={{ pointerEvents: isEndGame || isFetching ? 'none' : 'unset' }}
 			>
+				{<div className="board__extra-info">Getting data...! Please wait</div>}
 				<div className="board__header">
 					<Timer defaultCount={mines} />
 					<Timer ref={this.timerRef} />

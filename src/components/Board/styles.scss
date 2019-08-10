@@ -94,6 +94,7 @@
     border: 5px solid #a9a4a4;
     background: silver;
     margin-top: 170px;
+    position: relative;
 
     &__header {
         border-bottom: 5px solid #a9a4a4;
@@ -105,5 +106,9 @@
         flex-wrap: wrap;
         width: 144px;
         height: 144px;
+    }
+    &__extra-info {
+        position: absolute;
+        top: -70px;
     }
 }
