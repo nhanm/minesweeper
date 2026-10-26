@@ -1,0 +1,154 @@
+name: claude-task
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What Claude should change
+        required: true
+        type: string
+      base:
+        description: Branch to start from and open the PR against
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  task:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TASK: ${{ inputs.task }}
+      BASE: ${{ inputs.base }}
+      BRANCH: claude/${{ github.run_id }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Check configuration
+        env:
+          HAS_OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+          HAS_KEY: ${{ secrets.KIT_APP_PRIVATE_KEY != '' }}
+          HAS_BOT: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+          APP_ID: ${{ vars.KIT_APP_ID }}
+          CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+        run: |
+          missing=""
+          [ "$HAS_OAUTH" = true ] || missing="$missing secret:CLAUDE_CODE_OAUTH_TOKEN"
+          [ "$HAS_KEY" = true ] || missing="$missing secret:KIT_APP_PRIVATE_KEY"
+          [ "$HAS_BOT" = true ] || missing="$missing secret:TELEGRAM_BOT_TOKEN"
+          [ -n "$APP_ID" ] || missing="$missing var:KIT_APP_ID"
+          [ -n "$CHAT_ID" ] || missing="$missing var:TELEGRAM_CHAT_ID"
+          if [ -n "$missing" ]; then echo "::error::missing$missing"; exit 1; fi
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.base }}
+          fetch-depth: 0
+
+      - id: kit-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.KIT_APP_ID }}
+          private-key: ${{ secrets.KIT_APP_PRIVATE_KEY }}
+          owner: nhanm
+          repositories: claude-kit
+
+      - uses: actions/checkout@v5
+        with:
+          repository: nhanm/claude-kit
+          token: ${{ steps.kit-token.outputs.token }}
+          path: .claude-kit
+
+      - name: Load personal rules
+        run: |
+          echo ".claude-kit/" >> .git/info/exclude
+          mkdir -p ~/.claude
+          cp .claude-kit/user/CLAUDE.md ~/.claude/CLAUDE.md
+
+      - if: hashFiles('pnpm-lock.yaml') != ''
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: |
+          if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then corepack enable && yarn install --immutable
+          elif [ -f package-lock.json ]; then npm ci
+          elif [ -f package.json ]; then echo "::error::package.json without a lockfile"; exit 1
+          fi
+
+      - run: git switch -c "$BRANCH"
+
+      - id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Task from the repository owner:
+
+            ${{ inputs.task }}
+
+            Make the change in this checked-out repository. Do not commit, push, create branches or open PRs: the workflow commits your working tree and opens the PR after you finish. Run the project's own type-check and lint for what you touched before finishing. If the task is unclear or unsafe, change nothing and explain why.
+          claude_args: >-
+            --plugin-dir ${{ github.workspace }}/.claude-kit/plugins/devkit
+            --allowedTools "Read,Edit,Write,Glob,Grep,Skill,Bash(npm run *),Bash(pnpm run *),Bash(pnpm exec *),Bash(yarn run *),Bash(npx tsc *),Bash(npx eslint *),Bash(npx prettier *),Bash(git status*),Bash(git diff*),Bash(git log*),Bash(ls *)"
+
+      - id: summary
+        name: Read Claude's final answer
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          answer=$(jq -r '[.[] | select(.type == "result")] | last | .result // empty' "$EXECUTION_FILE" | head -c 2500)
+          printf '%s\n' "$answer"
+          {
+            echo "text<<CLAUDE_SUMMARY_EOF"
+            printf '%s\n' "$answer"
+            echo "CLAUDE_SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - id: pr
+        name: Commit, push and open the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "result=Khong co thay doi nao." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          title="claude: $(printf '%s' "$TASK" | head -n 1 | cut -c1-60)"
+          git commit -q -m "$title" -m "$TASK" -m "Run: $RUN_URL"
+          git push -q origin "$BRANCH"
+          url=$(gh pr create --base "$BASE" --head "$BRANCH" --title "$title" --body "$(printf '%s\n\nRun: %s' "$TASK" "$RUN_URL")")
+          echo "result=PR: $url" >> "$GITHUB_OUTPUT"
+          echo "number=${url##*/}" >> "$GITHUB_OUTPUT"
+
+      - name: Report to Telegram
+        if: always()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+          STATUS: ${{ job.status }}
+          RESULT: ${{ steps.pr.outputs.result }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          SUMMARY: ${{ steps.summary.outputs.text }}
+          REPO: ${{ github.repository }}
+        run: |
+          text=$(printf '%s · claude-task · %s\n%s\n\n%s\n\n%s\nRun: %s' "$REPO" "$STATUS" "$(printf '%s' "$TASK" | head -n 1)" "$SUMMARY" "$RESULT" "$RUN_URL")
+          jq -n --arg chat "$CHAT_ID" --arg text "$text" --arg repo "$REPO" --arg pr "$PR_NUMBER" '
+            {chat_id: $chat, text: $text, link_preview_options: {is_disabled: true}}
+            + if $pr == "" then {} else
+                {reply_markup: {inline_keyboard: [[{text: ("Merge PR #" + $pr + "…"), callback_data: ("p|" + $repo + "|" + $pr)}]]}}
+              end' \
+            | curl -sf -X POST -H 'content-type: application/json' -d @- "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" > /dev/null
